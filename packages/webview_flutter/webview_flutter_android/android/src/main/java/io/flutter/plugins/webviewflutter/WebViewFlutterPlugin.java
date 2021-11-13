@@ -4,7 +4,13 @@
 
 package io.flutter.plugins.webviewflutter;
 
+import android.app.Activity;
+import androidx.annotation.NonNull;
+import java.lang.ref.WeakReference;
+
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
+import io.flutter.embedding.engine.plugins.activity.ActivityAware;
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding;
 import io.flutter.plugin.common.BinaryMessenger;
 
 /**
@@ -15,7 +21,9 @@ import io.flutter.plugin.common.BinaryMessenger;
  * <p>Call {@link #registerWith(Registrar)} to use the stable {@code io.flutter.plugin.common}
  * package instead.
  */
-public class WebViewFlutterPlugin implements FlutterPlugin {
+public class WebViewFlutterPlugin implements FlutterPlugin, ActivityAware {
+
+  public static WeakReference<Activity> activityRef;
 
   private FlutterCookieManager flutterCookieManager;
 
@@ -69,5 +77,22 @@ public class WebViewFlutterPlugin implements FlutterPlugin {
 
     flutterCookieManager.dispose();
     flutterCookieManager = null;
+  }
+
+  @Override
+  public void onAttachedToActivity(ActivityPluginBinding binding) {
+    activityRef = new WeakReference<Activity>(binding.getActivity());
+  }
+
+  @Override
+  public void onDetachedFromActivityForConfigChanges() {
+  }
+
+  @Override
+  public void onReattachedToActivityForConfigChanges(@NonNull ActivityPluginBinding activityPluginBinding) {
+  }
+
+  @Override
+  public void onDetachedFromActivity() {
   }
 }

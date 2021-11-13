@@ -5,7 +5,9 @@
 package io.flutter.plugins.webviewflutter;
 
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.content.Context;
+import android.content.pm.ActivityInfo;
 import android.hardware.display.DisplayManager;
 import android.os.Build;
 import android.os.Handler;
@@ -17,6 +19,7 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebStorage;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
@@ -39,6 +42,10 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
 
   // Verifies that a url opened by `Window.open` has a secure url.
   private class FlutterWebChromeClient extends WebChromeClient {
+
+    private WebChromeClient.CustomViewCallback customViewCallback;
+    private View customView;
+    private int currentUiSettings;
 
     @Override
     public boolean onCreateWindow(
@@ -80,6 +87,40 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
     @Override
     public void onProgressChanged(WebView view, int progress) {
       flutterWebViewClient.onLoadingProgress(progress);
+    }
+
+    @Override
+    public void onShowCustomView(View view, CustomViewCallback callback) {
+      super.onShowCustomView(view, callback);
+      if (customView != null) {
+        callback.onCustomViewHidden();
+        return;
+      }
+      customView = view;
+      customViewCallback = callback;
+      Activity activity = WebViewFlutterPlugin.activityRef.get();
+      if (activity != null) {
+        ((FrameLayout)activity.getWindow().getDecorView()).addView(view);
+        View currentView = activity.getWindow().getDecorView();
+        this.currentUiSettings = currentView.getSystemUiVisibility();
+        currentView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN |
+                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE);
+      }
+    }
+
+    @Override
+    public void onHideCustomView() {
+      if (customView == null) return;
+
+      Activity activity = WebViewFlutterPlugin.activityRef.get();
+      if (activity != null) {
+        ((FrameLayout) activity.getWindow().getDecorView()).removeView(this.customView);
+        this.customView = null;
+        activity.getWindow().getDecorView().setSystemUiVisibility(this.currentUiSettings);
+
+        customViewCallback.onCustomViewHidden();
+      }
+      super.onHideCustomView();
     }
   }
 
