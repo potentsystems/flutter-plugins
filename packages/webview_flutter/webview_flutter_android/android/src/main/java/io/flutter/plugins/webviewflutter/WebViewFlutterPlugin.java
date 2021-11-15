@@ -23,7 +23,7 @@ import io.flutter.plugin.common.BinaryMessenger;
  */
 public class WebViewFlutterPlugin implements FlutterPlugin, ActivityAware {
 
-  public static WeakReference<Activity> activityRef;
+  private WeakReference<Activity> activityRef;
 
   private FlutterCookieManager flutterCookieManager;
 
@@ -54,7 +54,7 @@ public class WebViewFlutterPlugin implements FlutterPlugin, ActivityAware {
         .platformViewRegistry()
         .registerViewFactory(
             "plugins.flutter.io/webview",
-            new FlutterWebViewFactory(registrar.messenger(), registrar.view()));
+            new FlutterWebViewFactory(registrar.messenger(), registrar.view(), /*plugin*/ null));
     new FlutterCookieManager(registrar.messenger());
   }
 
@@ -65,7 +65,7 @@ public class WebViewFlutterPlugin implements FlutterPlugin, ActivityAware {
         .getPlatformViewRegistry()
         .registerViewFactory(
             "plugins.flutter.io/webview",
-            new FlutterWebViewFactory(messenger, /*containerView=*/ null));
+            new FlutterWebViewFactory(messenger, /*containerView=*/ null, this));
     flutterCookieManager = new FlutterCookieManager(messenger);
   }
 
@@ -86,13 +86,23 @@ public class WebViewFlutterPlugin implements FlutterPlugin, ActivityAware {
 
   @Override
   public void onDetachedFromActivityForConfigChanges() {
+    activityRef = null;
   }
 
   @Override
-  public void onReattachedToActivityForConfigChanges(@NonNull ActivityPluginBinding activityPluginBinding) {
+  public void onReattachedToActivityForConfigChanges(@NonNull ActivityPluginBinding binding) {
+    activityRef = new WeakReference<Activity>(binding.getActivity());
   }
 
   @Override
   public void onDetachedFromActivity() {
+    activityRef = null;
+  }
+
+  public Activity getActivity() {
+    if (this.activityRef == null) {
+      return null;
+    }
+    return this.activityRef.get();
   }
 }

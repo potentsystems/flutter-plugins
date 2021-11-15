@@ -16,11 +16,13 @@ import java.util.Map;
 public final class FlutterWebViewFactory extends PlatformViewFactory {
   private final BinaryMessenger messenger;
   private final View containerView;
+  private final WebViewFlutterPlugin plugin;
 
-  FlutterWebViewFactory(BinaryMessenger messenger, View containerView) {
+  FlutterWebViewFactory(BinaryMessenger messenger, View containerView, WebViewFlutterPlugin plugin) {
     super(StandardMessageCodec.INSTANCE);
     this.messenger = messenger;
     this.containerView = containerView;
+    this.plugin = plugin;
   }
 
   @SuppressWarnings("unchecked")
@@ -28,6 +30,6 @@ public final class FlutterWebViewFactory extends PlatformViewFactory {
   public PlatformView create(Context context, int id, Object args) {
     Map<String, Object> params = (Map<String, Object>) args;
     MethodChannel methodChannel = new MethodChannel(messenger, "plugins.flutter.io/webview_" + id);
-    return new FlutterWebView(context, methodChannel, params, containerView);
+    return new FlutterWebView(context, methodChannel, params, containerView, plugin);
   }
 }

@@ -39,6 +39,7 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
   private final MethodChannel methodChannel;
   private final FlutterWebViewClient flutterWebViewClient;
   private final Handler platformThreadHandler;
+  private final WebViewFlutterPlugin plugin;
 
   // Verifies that a url opened by `Window.open` has a secure url.
   private class FlutterWebChromeClient extends WebChromeClient {
@@ -98,7 +99,7 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
       }
       customView = view;
       customViewCallback = callback;
-      Activity activity = WebViewFlutterPlugin.activityRef.get();
+      Activity activity = plugin.getActivity();
       if (activity != null) {
         ((FrameLayout)activity.getWindow().getDecorView()).addView(view);
         View currentView = activity.getWindow().getDecorView();
@@ -112,7 +113,7 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
     public void onHideCustomView() {
       if (customView == null) return;
 
-      Activity activity = WebViewFlutterPlugin.activityRef.get();
+      Activity activity = plugin.getActivity();
       if (activity != null) {
         ((FrameLayout) activity.getWindow().getDecorView()).removeView(this.customView);
         this.customView = null;
@@ -130,12 +131,15 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
       final Context context,
       MethodChannel methodChannel,
       Map<String, Object> params,
-      View containerView) {
+      View containerView,
+      WebViewFlutterPlugin plugin) {
 
     DisplayListenerProxy displayListenerProxy = new DisplayListenerProxy();
     DisplayManager displayManager =
         (DisplayManager) context.getSystemService(Context.DISPLAY_SERVICE);
     displayListenerProxy.onPreWebViewInitialization(displayManager);
+
+    this.plugin = plugin;
 
     this.methodChannel = methodChannel;
     this.methodChannel.setMethodCallHandler(this);
