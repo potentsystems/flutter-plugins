@@ -46,7 +46,8 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
 
     private WebChromeClient.CustomViewCallback customViewCallback;
     private View customView;
-    private int currentUiSettings;
+    private int originalUiSettings;
+    private int originalOrientation;
 
     @Override
     public boolean onCreateWindow(
@@ -103,8 +104,9 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
       if (activity != null) {
         ((FrameLayout)activity.getWindow().getDecorView()).addView(view);
         View currentView = activity.getWindow().getDecorView();
-        this.currentUiSettings = currentView.getSystemUiVisibility();
-        activity.setRequestedOrientation( ActivityInfo.SCREEN_ORIENTATION_SENSOR);
+        this.originalUiSettings = currentView.getSystemUiVisibility();
+        this.originalOrientation = activity.getRequestedOrientation();
+        activity.setRequestedOrientation( ActivityInfo.SCREEN_ORIENTATION_LOCKED);
         currentView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN |
                 View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE);
       }
@@ -118,9 +120,9 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
       if (activity != null) {
         ((FrameLayout) activity.getWindow().getDecorView()).removeView(this.customView);
         this.customView = null;
-        activity.getWindow().getDecorView().setSystemUiVisibility(this.currentUiSettings);
-        // activity.setRequestedOrientation( ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        activity.getWindow().getDecorView().postDelayed(() -> activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT), 100);
+        activity.getWindow().getDecorView().setSystemUiVisibility(this.originalUiSettings);
+        activity.setRequestedOrientation(this.originalOrientation);
+        // activity.getWindow().getDecorView().postDelayed(() -> activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT), 100);
 
         customViewCallback.onCustomViewHidden();
       }
